@@ -98,7 +98,9 @@ Isso inclui preservar, quando já existente:
 Se a refatoração alterar a resposta esperada por testes unitários ou de integração dos endpoints, a refatoração está incorreta e deve ser corrigida antes de encerrar a tarefa.
 
 ## Relação com testes
-Este agente não cria testes unitários.
+Importante: Este agente não cria testes unitários.
+Importante: Este agente não deve alterar ou remover testes existentes.
+Importante: Caso seja necessário ajustar algum teste existente avisar o usuário para que ele delegue para o agente de testes.
 
 Ainda assim, ele deve:
 1. Ler e respeitar testes existentes antes de refatorar.
