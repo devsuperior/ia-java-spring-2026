@@ -1,0 +1,128 @@
+opencollection: 1.0.0
+info:
+  name: dev-xp-ai
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ''
+      port: ''
+      auth:
+        username: ''
+        password: ''
+      bypassProxy: ''
+items:
+  - info:
+      name: Atualizar anos de experiencia
+      type: http
+      seq: 5
+    http:
+      method: put
+      url: http://localhost:8080/developers/1/experience
+      headers:
+        - name: Content-Type
+          value: application/json
+      body:
+        type: json
+        data: "{\r\n  \"yearsOfExperience\": 8\r\n}"
+      auth: inherit
+    settings:
+      encodeUrl: false
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+  - info:
+      name: Buscar por id
+      type: http
+      seq: 4
+    http:
+      method: get
+      url: http://localhost:8080/developers/1
+      auth: inherit
+    settings:
+      encodeUrl: false
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+  - info:
+      name: Criar desenvolvedor
+      type: http
+      seq: 1
+    http:
+      method: post
+      url: http://localhost:8080/developers
+      headers:
+        - name: Content-Type
+          value: application/json
+        - name: correlationId
+          value: '{{$guid}}'
+      body:
+        type: json
+        data: |-
+          {
+            "fullName": "{{$randomFullName}}",
+            "email": "{{$randomEmail}}",
+            "nickname": "{{$randomAbbreviation}}{{$randomNameSuffix}}{{$randomFirstName}}",
+            "uf": "SP",
+            "yearsOfExperience": 6,
+            "primaryLanguage": "Java",
+            "interestedInAi": true,
+            "skills": [
+              "Spring Boot",
+              "JUnit"
+            ]
+          }
+      auth: inherit
+    settings:
+      encodeUrl: false
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+  - info:
+      name: Listar com filtros
+      type: http
+      seq: 3
+    http:
+      method: get
+      url: http://localhost:8080/developers?uf=SP&language=Java
+      headers:
+        - name: correlationId
+          value: '{{$guid}}'
+      params:
+        - name: uf
+          value: SP
+          type: query
+        - name: language
+          value: Java
+          type: query
+      auth: inherit
+    settings:
+      encodeUrl: false
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+  - info:
+      name: Listar todos os desenvolvedores
+      type: http
+      seq: 2
+    http:
+      method: get
+      url: http://localhost:8080/developers
+      headers:
+        - name: correlationId
+          value: '{{$guid}}'
+      auth: inherit
+    settings:
+      encodeUrl: false
+      timeout: 0
+      followRedirects: true
+      maxRedirects: 5
+bundled: true
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+    exportedAt: '2026-03-11T21:25:17.072Z'
+    exportedUsing: Bruno
