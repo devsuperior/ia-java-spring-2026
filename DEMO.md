@@ -110,19 +110,15 @@ Execute os testes relevantes, informe os comandos executados, o resultado e a co
 
 ### Prompt 4: Gerar o fechamento final
 
+Antes faça:
+- altere a branch para `feature/tabela`
+- git add e git commit das mudanças
+- git push
+
 ```text
 Use a skill `pr-summary` #file:.github/skills/pr-summary/SKILL.md  para gerar o fechamento técnico desta execução.
-
-Quero um resumo final com:
-- issue atendida
-- o que foi alterado
-- classes principais afetadas
-- testes criados ou ajustados
-- comandos executados
-- resultado dos testes
-- cobertura JaCoCo
-- riscos e limitações
-- um resumo curto pronto para PR
+O commit e push já foi feito, mapeie a branch atual e seguida para próxima tarefa.
+Faça o PR dessa branch para a main, usando via GitHub MCP, usando o resumo curto gerado e referenciando a issue #2.
 ```
 
 ## O que observar durante a apresentação
