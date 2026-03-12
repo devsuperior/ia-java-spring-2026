@@ -4,23 +4,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("tb_developer")
-public class DeveloperEntity {
+@Table("tb_developer_experience")
+public class DeveloperExperienceEntity {
 
     @Id
     private Long id;
 
-    @Column("full_name")
-    private String fullName;
-
-    @Column("email")
-    private String email;
-
-    @Column("nickname")
-    private String nickname;
-
-    @Column("uf")
-    private String uf;
+    @Column("developer_id")
+    private Long developerId;
 
     @Column("years_of_experience")
     private Integer yearsOfExperience;
@@ -34,17 +25,13 @@ public class DeveloperEntity {
     @Column("skills")
     private String skills;
 
-    public DeveloperEntity() {
+    public DeveloperExperienceEntity() {
     }
 
-    public DeveloperEntity(Long id, String fullName, String email, String nickname,
-                           String uf, Integer yearsOfExperience, String primaryLanguage,
-                           Boolean interestedInAi, String skills) {
+    public DeveloperExperienceEntity(Long id, Long developerId, Integer yearsOfExperience,
+                                     String primaryLanguage, Boolean interestedInAi, String skills) {
         this.id = id;
-        this.fullName = fullName;
-        this.email = email;
-        this.nickname = nickname;
-        this.uf = uf;
+        this.developerId = developerId;
         this.yearsOfExperience = yearsOfExperience;
         this.primaryLanguage = primaryLanguage;
         this.interestedInAi = interestedInAi;
@@ -54,17 +41,8 @@ public class DeveloperEntity {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getNickname() { return nickname; }
-    public void setNickname(String nickname) { this.nickname = nickname; }
-
-    public String getUf() { return uf; }
-    public void setUf(String uf) { this.uf = uf; }
+    public Long getDeveloperId() { return developerId; }
+    public void setDeveloperId(Long developerId) { this.developerId = developerId; }
 
     public Integer getYearsOfExperience() { return yearsOfExperience; }
     public void setYearsOfExperience(Integer yearsOfExperience) { this.yearsOfExperience = yearsOfExperience; }

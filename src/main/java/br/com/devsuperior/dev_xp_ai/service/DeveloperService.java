@@ -3,10 +3,12 @@ package br.com.devsuperior.dev_xp_ai.service;
 import br.com.devsuperior.dev_xp_ai.dto.DeveloperCreateRequest;
 import br.com.devsuperior.dev_xp_ai.dto.DeveloperResponse;
 import br.com.devsuperior.dev_xp_ai.dto.UpdateExperienceRequest;
-import br.com.devsuperior.dev_xp_ai.entity.DeveloperEntity;
+import br.com.devsuperior.dev_xp_ai.entity.DeveloperExperienceEntity;
+import br.com.devsuperior.dev_xp_ai.entity.DeveloperUserEntity;
 import br.com.devsuperior.dev_xp_ai.exception.ConflictException;
 import br.com.devsuperior.dev_xp_ai.exception.DeveloperNotFoundException;
-import br.com.devsuperior.dev_xp_ai.repository.DeveloperRepository;
+import br.com.devsuperior.dev_xp_ai.repository.DeveloperExperienceRepository;
+import br.com.devsuperior.dev_xp_ai.repository.DeveloperUserRepository;
 import br.com.devsuperior.dev_xp_ai.util.TextNormalizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +34,13 @@ public class DeveloperService {
             "RR", "SC", "SP", "SE", "TO"
     );
 
-    private final DeveloperRepository developerRepository;
+    private final DeveloperUserRepository userRepository;
+    private final DeveloperExperienceRepository experienceRepository;
 
-    public DeveloperService(DeveloperRepository developerRepository) {
-        this.developerRepository = developerRepository;
+    public DeveloperService(DeveloperUserRepository userRepository,
+                            DeveloperExperienceRepository experienceRepository) {
+        this.userRepository = userRepository;
+        this.experienceRepository = experienceRepository;
     }
 
     public DeveloperResponse createDeveloper(DeveloperCreateRequest request) {
@@ -56,32 +61,37 @@ public class DeveloperService {
                 .toList();
         String skillsCsv = TextNormalizer.serializeSkills(normalizedSkillsList);
 
-        if (developerRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
             throw new ConflictException("Email ja cadastrado",
                     List.of("Ja existe um desenvolvedor com este email."));
         }
 
-        if (developerRepository.existsByNicknameIgnoreCase(normalizedNickname)) {
+        if (userRepository.existsByNicknameIgnoreCase(normalizedNickname)) {
             throw new ConflictException("Nickname ja cadastrado",
                     List.of("Ja existe um desenvolvedor com este nickname."));
         }
 
-        DeveloperEntity entity = new DeveloperEntity(
+        DeveloperUserEntity userEntity = new DeveloperUserEntity(
                 null,
                 normalizedName,
                 normalizedEmail,
                 normalizedNickname,
-                normalizedUf,
+                normalizedUf
+        );
+        DeveloperUserEntity savedUser = userRepository.save(userEntity);
+
+        DeveloperExperienceEntity experienceEntity = new DeveloperExperienceEntity(
+                null,
+                savedUser.getId(),
                 request.yearsOfExperience(),
                 normalizedLanguage,
                 request.interestedInAi(),
                 skillsCsv
         );
+        DeveloperExperienceEntity savedExperience = experienceRepository.save(experienceEntity);
 
-        DeveloperEntity saved = developerRepository.save(entity);
-
-        log.info("[correlationId={}] Developer criado com sucesso: id={}", MDC.get("correlationId"), saved.getId());
-        return toResponse(saved);
+        log.info("[correlationId={}] Developer criado com sucesso: id={}", MDC.get("correlationId"), savedUser.getId());
+        return toResponse(savedUser, savedExperience);
     }
 
     public List<DeveloperResponse> listDevelopers(String uf, String language) {
@@ -97,10 +107,13 @@ public class DeveloperService {
 
         String normalizedLanguage = (language != null && !language.isBlank()) ? language.trim() : null;
 
-        List<DeveloperResponse> result = developerRepository
+        List<DeveloperResponse> result = userRepository
                 .findAllByFilters(normalizedUf, normalizedLanguage)
                 .stream()
-                .map(this::toResponse)
+                .map(user -> {
+                    DeveloperExperienceEntity experience = findExperienceOrThrow(user.getId());
+                    return toResponse(user, experience);
+                })
                 .toList();
 
         log.info("[correlationId={}] Listagem concluida: {} resultado(s)", MDC.get("correlationId"), result.size());
@@ -110,11 +123,12 @@ public class DeveloperService {
     public DeveloperResponse getDeveloperById(Long id) {
         log.info("[correlationId={}] Buscando developer por id={}", MDC.get("correlationId"), id);
 
-        DeveloperEntity entity = developerRepository.findById(id)
+        DeveloperUserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new DeveloperNotFoundException(id));
+        DeveloperExperienceEntity experience = findExperienceOrThrow(id);
 
         log.info("[correlationId={}] Developer encontrado: id={}", MDC.get("correlationId"), id);
-        return toResponse(entity);
+        return toResponse(user, experience);
     }
 
     public DeveloperResponse updateExperience(Long id, UpdateExperienceRequest request) {
@@ -125,14 +139,26 @@ public class DeveloperService {
             throw new IllegalArgumentException(String.join("; ", errors));
         }
 
-        DeveloperEntity entity = developerRepository.findById(id)
+        DeveloperUserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new DeveloperNotFoundException(id));
+        DeveloperExperienceEntity experience = findExperienceOrThrow(id);
 
-        entity.setYearsOfExperience(request.yearsOfExperience());
-        DeveloperEntity updated = developerRepository.save(entity);
+        experience.setYearsOfExperience(request.yearsOfExperience());
+        DeveloperExperienceEntity updatedExperience = experienceRepository.save(experience);
 
-        log.info("[correlationId={}] Experiencia atualizada para id={}: yearsOfExperience={}", MDC.get("correlationId"), id, updated.getYearsOfExperience());
-        return toResponse(updated);
+        log.info("[correlationId={}] Experiencia atualizada para id={}: yearsOfExperience={}",
+                MDC.get("correlationId"), id, updatedExperience.getYearsOfExperience());
+        return toResponse(user, updatedExperience);
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers privados
+    // -------------------------------------------------------------------------
+
+    private DeveloperExperienceEntity findExperienceOrThrow(Long developerId) {
+        return experienceRepository.findByDeveloperId(developerId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Experiencia nao encontrada para developer id=" + developerId));
     }
 
     private List<String> validateCreateRequest(DeveloperCreateRequest request) {
@@ -190,17 +216,17 @@ public class DeveloperService {
         return errors;
     }
 
-    private DeveloperResponse toResponse(DeveloperEntity entity) {
+    private DeveloperResponse toResponse(DeveloperUserEntity user, DeveloperExperienceEntity experience) {
         return new DeveloperResponse(
-                entity.getId(),
-                entity.getFullName(),
-                entity.getEmail(),
-                entity.getNickname(),
-                entity.getUf(),
-                entity.getYearsOfExperience(),
-                entity.getPrimaryLanguage(),
-                entity.getInterestedInAi(),
-                TextNormalizer.deserializeSkills(entity.getSkills())
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getNickname(),
+                user.getUf(),
+                experience.getYearsOfExperience(),
+                experience.getPrimaryLanguage(),
+                experience.getInterestedInAi(),
+                TextNormalizer.deserializeSkills(experience.getSkills())
         );
     }
 
